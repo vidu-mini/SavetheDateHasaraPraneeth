@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="si" class="locked">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>හසාරා සහ ප්‍රනීත් | විවාහ ආරාධනය</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Noto+Sans+Sinhala:wght@300;400;500;600&family=Noto+Serif+Sinhala:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #fbf6ea;
+    --cream-deep: #f3e9d2;
+    --gold: #b8923f;
+    --gold-light: #d8b865;
+    --gold-dark: #8f6d27;
+    --ink: #4a3b22;
+    --serif: 'Cormorant Garamond', 'Noto Serif Sinhala', Georgia, 'Times New Roman', serif;
+    --sans: 'Noto Sans Sinhala', 'Helvetica Neue', Arial, sans-serif;
+    --env: 3.2s; /* time before the main invitation starts animating in */
+
+    /* Paper texture: fine fibre noise + linen weave */
+    --noise: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .42  0 0 0 0 .32  0 0 0 0 .12  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    --linen:
+      repeating-linear-gradient(0deg,  rgba(120,90,30,.06) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg, rgba(120,90,30,.05) 0 1px, transparent 1px 3px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  html.locked, html.locked body { overflow: hidden; height: 100%; }
+  body {
+    font-family: var(--sans);
+    color: var(--ink);
+    background: var(--cream);
+    line-height: 1.9;
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* =========================================================
+     ENVELOPE OVERLAY
+     ========================================================= */
+  .envelope-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+    background:
+      radial-gradient(circle at 20% 15%, rgba(216,184,101,.22), transparent 45%),
+      radial-gradient(circle at 80% 85%, rgba(216,184,101,.22), transparent 45%),
+      linear-gradient(160deg, #fffaf0, var(--cream-deep));
+    cursor: pointer;
+    animation: overlayOut .9s ease-in-out 3.2s forwards;
+  }
+  .envelope-overlay.closing { animation: overlayOut .5s ease-in forwards !important; }
+  .envelope-overlay::before {
+    content: ""; position: absolute; inset: 14px;
+    border: 1px solid rgba(184,146,63,.5);
+    pointer-events: none;
+  }
+  .envelope-overlay::after {
+    content: ""; position: absolute; inset: 22px;
+    border: 1px solid rgba(184,146,63,.25);
+    pointer-events: none;
+  }
+
+  .envelope {
+    position: relative;
+    width: min(86vw, 440px);
+    aspect-ratio: 3 / 2;
+    opacity: 0;
+    animation:
+      envIn .9s ease-out .2s forwards,
+      envOut 1s ease-in 2.9s forwards;
+  }
+
+  /* Back of the envelope (textured paper) */
+  .env-back {
+    position: absolute; inset: 0; z-index: 0;
+    background:
+      var(--noise),
+      var(--linen),
+      linear-gradient(160deg, #f0dfae, #e2c982);
+    border: 1px solid var(--gold);
+    border-radius: 4px;
+    box-shadow:
+      0 25px 55px rgba(143,109,39,.35),
+      0 4px 10px rgba(143,109,39,.2),
+      inset 0 0 0 1px rgba(255,255,255,.35),
+      inset 0 0 24px rgba(143,109,39,.18);
+  }
+
+  /* ---------- Pocket (front of envelope) — three paper triangles ----------
+     Each <i> carries the drop-shadow filter; the clipped paper shape lives in
+     ::before (a clip-path on the same element would cut the shadow off) and a
+     thin edge highlight lives in ::after. */
+  .env-pocket { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+  .env-pocket i { position: absolute; inset: 0; display: block; }
+  .env-pocket i::before,
+  .env-pocket i::after { content: ""; position: absolute; inset: 0; }
+
+  .env-pocket .l { filter: drop-shadow(0 0 4px rgba(90,60,10,.4)); }
+  .env-pocket .l::before { clip-path: polygon(0 0, 100% 52%, 0 100%); background: var(--noise), var(--linen), linear-gradient(120deg, #f6e8bd, #e9d393); }
+  .env-pocket .l::after  { clip-path: polygon(0 0, 100% 52%, 100% 54.2%, 0 2.2%); background: linear-gradient(90deg, rgba(255,255,255,.7), rgba(255,255,255,.25)); }
+
+  .env-pocket .r { filter: drop-shadow(0 0 4px rgba(90,60,10,.4)); }
+  .env-pocket .r::before { clip-path: polygon(100% 0, 0 52%, 100% 100%); background: var(--noise), var(--linen), linear-gradient(240deg, #f6e8bd, #e9d393); }
+  .env-pocket .r::after  { clip-path: polygon(100% 0, 0 52%, 0 54.2%, 100% 2.2%); background: linear-gradient(270deg, rgba(255,255,255,.7), rgba(255,255,255,.25)); }
+
+  .env-pocket .b { filter: drop-shadow(0 -2px 5px rgba(90,60,10,.4)); }
+  .env-pocket .b::before { clip-path: polygon(0 100%, 50% 42%, 100% 100%); background: var(--noise), var(--linen), linear-gradient(0deg, #f9edc9, #f0dca0); }
+  .env-pocket .b::after  { clip-path: polygon(0 100%, 50% 42%, 100% 100%, 96% 100%, 50% 47%, 4% 100%); background: linear-gradient(180deg, rgba(255,255,255,.65), rgba(255,255,255,.2)); }
+
+  .env-pocket .gold-line::before {
+    clip-path: polygon(0 100%, 50% 42%, 100% 100%, 100% 99%, 50% 41%, 0 99%);
+    background: var(--gold);
+  }
+  .env-pocket .gold-line::after { display: none; }
+
+  /* ---------- Top flap — hinged on the top edge, folds back upwards ----------
+     .env-flap-wrap carries the drop-shadow (a filter directly on the rotating
+     element would flatten its 3D faces); .env-flap does the 3D turn. The back
+     face is mirrored on Y so that after the 180° turn it faces the viewer. */
+  .env-flap-wrap {
+    position: absolute; left: 0; top: 0; width: 100%; height: 56%;
+    z-index: 6;
+    filter: drop-shadow(0 4px 5px rgba(90,60,10,.4));
+    animation: flapZ 1.4s linear 1.3s forwards;
+  }
+  .env-flap {
+    position: absolute; inset: 0;
+    transform-origin: top center;
+    transform-style: preserve-3d;
+    animation: flapOpen 1.4s cubic-bezier(.45,.05,.35,1) 1.3s forwards;
+  }
+  .env-flap .face {
+    position: absolute; inset: 0;
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    background: var(--gold);
+    backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  }
+  .env-flap .face::before,
+  .env-flap .face::after { content: ""; position: absolute; inset: 0; }
+  .env-flap .face::before { clip-path: polygon(1.2% 0, 98.8% 0, 50% 96%); }
+  .env-flap .front::before { background: var(--noise), var(--linen), linear-gradient(180deg, #f7e9bf, #ead498); }
+  .env-flap .back { transform: rotateY(180deg); }
+  .env-flap .back::before  { background: var(--noise), var(--linen), linear-gradient(0deg, #e3c985, #efdca6); }
+  /* inner edge highlight — simulates paper thickness */
+  .env-flap .face::after {
+    clip-path: polygon(evenodd,
+      1.2% 0, 98.8% 0, 50% 96%, 1.2% 0,
+      4.2% 3%, 95.8% 3%, 50% 90%, 4.2% 3%);
+    background: linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,.22));
+  }
+
+  /* ---------- Wax seal (blank, dark antique gold / bronze, uneven stamp) ---------- */
+  .env-seal {
+    position: absolute; left: 50%; top: 56%; z-index: 7;
+    width: clamp(50px, 15vw, 72px); aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    border-radius: 45% 55% 42% 58% / 50% 48% 52% 50%;
+    background:
+      radial-gradient(circle at 32% 28%, #d4ad55 0%, #a57d2c 28%, #7a5a1c 62%, #4a3410 100%);
+    box-shadow:
+      0 6px 12px rgba(50,32,6,.55),
+      0 2px 3px rgba(50,32,6,.6),
+      inset 0 3px 4px rgba(255,235,170,.45),
+      inset 0 -5px 8px rgba(30,18,2,.75),
+      inset 4px 0 6px rgba(255,235,170,.12),
+      inset -5px 0 7px rgba(30,18,2,.5);
+    animation: sealOut .8s ease-in 1.15s forwards;
+  }
+  /* uneven wax rim */
+  .env-seal::before {
+    content: ""; position: absolute; inset: -4%;
+    border-radius: 55% 45% 58% 42% / 47% 54% 46% 53%;
+    background: radial-gradient(circle at 40% 35%, #8f6a22, #4a3410 85%);
+    box-shadow: inset 0 2px 3px rgba(255,225,150,.25), inset 0 -2px 4px rgba(20,10,0,.6);
+    z-index: -1;
+  }
+  /* pressed centre of the stamp */
+  .env-seal::after {
+    content: ""; position: absolute; inset: 21%;
+    border-radius: 52% 48% 47% 53% / 49% 53% 47% 51%;
+    background:
+      radial-gradient(circle at 62% 68%, rgba(30,18,2,.35), transparent 70%),
+      radial-gradient(circle at 35% 30%, #b98f3a, #7a5a1c 75%);
+    box-shadow:
+      inset 0 3px 6px rgba(25,14,0,.75),
+      inset 0 -2px 3px rgba(255,230,160,.3),
+      0 1px 1px rgba(255,230,160,.25);
+  }
+
+  .skip-hint {
+    position: absolute; bottom: 2.2rem; left: 0; right: 0; text-align: center;
+    font-size: .8rem; letter-spacing: .08em; color: var(--gold);
+    opacity: 0; animation: hintIn 1s ease 1s forwards;
+  }
+
+  @keyframes envIn   { from { opacity: 0; transform: translateY(30px) scale(.95); } to { opacity: 1; transform: none; } }
+  @keyframes flapOpen {
+    from { transform: perspective(1200px) rotateX(0deg); }
+    to   { transform: perspective(1200px) rotateX(180deg); }
+  }
+  /* flap stays in front while turning, then tucks behind once open */
+  @keyframes flapZ {
+    0%, 49.9% { z-index: 6; }
+    50%, 100% { z-index: 1; }
+  }
+  @keyframes sealOut { to { opacity: 0; transform: translate(-50%, -50%) scale(1.45); } }
+  @keyframes envOut  { to { opacity: 0; transform: translateY(40px) scale(1.1); } }
+  @keyframes overlayOut { to { opacity: 0; visibility: hidden; } }
+  @keyframes hintIn  { to { opacity: .75; } }
+
+  /* =========================================================
+     MAIN INVITATION
+     ========================================================= */
+  section {
+    position: relative;
+    padding: 4.5rem 1.5rem;
+    text-align: center;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(216,184,101,.12), transparent 60%),
+      var(--cream);
+  }
+  section:nth-of-type(even) { background:
+      radial-gradient(circle at 50% 100%, rgba(216,184,101,.15), transparent 60%),
+      var(--cream-deep); }
+  .container { max-width: 620px; margin: 0 auto; position: relative; z-index: 2; }
+
+  h1, h2, h3 { font-family: var(--serif); font-weight: 500; color: var(--gold-dark); }
+  .eyebrow {
+    font-size: .9rem; letter-spacing: .1em;
+    color: var(--gold); margin-bottom: 1.2rem; font-weight: 400;
+  }
+  h2 { font-size: clamp(1.6rem, 5.5vw, 2.3rem); letter-spacing: .02em; margin-bottom: 1rem; line-height: 1.6; }
+  p { font-size: 1rem; }
+
+  .divider {
+    display: flex; align-items: center; justify-content: center; gap: .8rem;
+    margin: 1.4rem auto; max-width: 260px;
+  }
+  .divider::before, .divider::after {
+    content: ""; flex: 1; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  .divider svg { width: 20px; height: 20px; fill: var(--gold); }
+
+  /* Nelum (lotus) corner mandalas — top-left and bottom-right only */
+  .floral {
+    position: absolute;
+    width: clamp(110px, 28vw, 190px); height: clamp(110px, 28vw, 190px);
+    color: var(--gold);
+    opacity: .55; pointer-events: none; z-index: 1;
+  }
+  .floral.tl { top: 0; left: 0; }
+  .floral.br { bottom: 0; right: 0; transform: scale(-1,-1); }
+
+  /* ---------- Opening ---------- */
+  #opening {
+    min-height: 100vh; min-height: 100svh;
+    display: flex; align-items: center; justify-content: center;
+    background:
+      radial-gradient(ellipse at center, #fffaf0 0%, var(--cream) 55%, var(--cream-deep) 100%);
+  }
+  #opening .small { font-size: 1.1rem; letter-spacing: .12em; color: var(--gold); opacity: 0; animation: fadeUp 1.6s calc(var(--env) + .3s) forwards; }
+  #opening h1 {
+    font-size: clamp(2.4rem, 11vw, 4.6rem); line-height: 1.45; font-weight: 500;
+    margin: 1rem 0; letter-spacing: .01em;
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold-light) 50%, var(--gold-dark));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    opacity: 0; animation: fadeUp 2s calc(var(--env) + .9s) forwards;
+  }
+  #opening h1 .amp { display: block; font-size: .5em; margin: .1em 0; }
+  #opening .tag { font-family: var(--serif); font-size: 1.2rem; opacity: 0; animation: fadeUp 1.6s calc(var(--env) + 1.8s) forwards; }
+  .scroll-hint {
+    position: absolute; bottom: 1.6rem; left: 50%; transform: translateX(-50%);
+    font-size: .8rem; letter-spacing: .08em; color: var(--gold);
+    opacity: 0; animation: fadeUp 1.4s calc(var(--env) + 2.6s) forwards;
+  }
+  .scroll-hint::after {
+    content: ""; display: block; width: 1px; height: 34px; margin: .6rem auto 0;
+    background: linear-gradient(var(--gold), transparent);
+    animation: drip 2s infinite;
+  }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(22px);} to { opacity: 1; transform: none;} }
+  @keyframes drip { 0% { transform: scaleY(0); transform-origin: top;} 50% { transform: scaleY(1); transform-origin: top;} 51% { transform-origin: bottom;} 100% { transform: scaleY(0); transform-origin: bottom;} }
+
+  /* ---------- Countdown ---------- */
+  .timer { display: flex; justify-content: center; gap: .7rem; flex-wrap: wrap; margin-top: 1.8rem; }
+  .box {
+    width: 78px; padding: 1rem .3rem .8rem;
+    border: 1px solid var(--gold);
+    background: linear-gradient(160deg, #fffaf0, #f2e2b6);
+    box-shadow: 0 6px 18px rgba(143,109,39,.18), inset 0 0 0 3px rgba(255,255,255,.6);
+    border-radius: 6px;
+  }
+  .box span { display: block; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 2.2rem; font-weight: 600; color: var(--gold-dark); line-height: 1; }
+  .box small { display: block; margin-top: .6rem; font-size: .78rem; letter-spacing: .03em; color: var(--gold); line-height: 1.4; }
+  .countdown-done { font-family: var(--serif); font-size: 1.6rem; color: var(--gold-dark); margin-top: 1.5rem; }
+
+  /* ---------- Couple ---------- */
+  .together { font-family: var(--serif); font-size: 1.25rem; color: var(--gold); margin-bottom: 1rem; line-height: 1.8; }
+  .parents { font-family: var(--serif); font-size: 1.25rem; line-height: 1.9; }
+  .parents .and { color: var(--gold); display: block; font-size: 1rem; }
+  .names {
+    font-family: var(--serif); font-weight: 500; margin-top: .5rem;
+    font-size: clamp(1.7rem, 6.5vw, 2.6rem); line-height: 1.55; color: var(--gold-dark);
+  }
+  .names .amp { display: block; color: var(--gold); font-size: .65em; }
+  .names-tail { font-family: var(--serif); font-size: 1.2rem; color: var(--gold-dark); margin-top: .4rem; line-height: 1.8; }
+  .lead { margin-top: 1rem; font-size: 1rem; letter-spacing: .06em; color: var(--gold); }
+
+  /* ---------- Details ---------- */
+  .request { font-family: var(--serif); font-size: 1.25rem; margin-bottom: 1.6rem; line-height: 1.9; }
+  .date-block {
+    display: inline-block; padding: 1.2rem 1.8rem; margin: .5rem 0 1.2rem;
+    border-top: 1px solid var(--gold); border-bottom: 1px solid var(--gold);
+    font-family: var(--serif); font-size: clamp(1.25rem, 4.6vw, 1.7rem); color: var(--gold-dark); line-height: 1.7;
+  }
+  .time { font-family: var(--serif); font-size: 1.35rem; color: var(--gold-dark); }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    display: inline-block; cursor: pointer; border: none; text-decoration: none;
+    font-family: var(--sans); font-size: .95rem; letter-spacing: .06em; font-weight: 500;
+    color: #fff; padding: .95rem 2.4rem; margin-top: 1.6rem; border-radius: 40px;
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold-light) 50%, var(--gold-dark));
+    background-size: 200% 100%;
+    box-shadow: 0 8px 22px rgba(143,109,39,.3);
+    transition: background-position .5s, transform .25s, box-shadow .25s;
+  }
+  .btn:hover { background-position: 100% 0; transform: translateY(-2px); box-shadow: 0 12px 26px rgba(143,109,39,.38); }
+  .btn:active { transform: translateY(0); }
+
+  /* ---------- Venue / Dress ---------- */
+  .venue-name { font-family: var(--serif); font-size: 1.9rem; color: var(--gold-dark); line-height: 1.6; }
+  .dress { font-family: var(--serif); font-size: clamp(1.25rem, 4.6vw, 1.7rem); line-height: 1.8; }
+  .dress strong { color: var(--gold-dark); font-weight: 600; }
+
+  /* Dress code illustration in an elegant gold frame */
+  .dress-frame {
+    width: 100%; max-width: 200px;
+    margin: 1.6rem auto 1.4rem;
+    padding: 10px;
+    background: #fffdf7;
+    border: 1px solid var(--gold);
+    border-radius: 3px;
+    box-shadow:
+      0 10px 28px rgba(143,109,39,.22),
+      0 2px 6px rgba(143,109,39,.15),
+      inset 0 0 0 4px #fffdf7,
+      inset 0 0 0 5px rgba(216,184,101,.55);
+  }
+  .dress-frame img {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    font-family: var(--serif);
+    font-size: .8rem;
+    color: var(--gold);
+  }
+
+  /* ---------- RSVP ---------- */
+  form { margin-top: 1.6rem; text-align: left; background: rgba(255,255,255,.55); padding: 1.8rem 1.5rem; border: 1px solid var(--gold-light); border-radius: 8px; box-shadow: 0 10px 30px rgba(143,109,39,.12); }
+  label { display: block; font-size: .9rem; letter-spacing: .04em; color: var(--gold-dark); margin: 1.1rem 0 .4rem; font-weight: 500; }
+  label:first-child { margin-top: 0; }
+  input, select, textarea {
+    width: 100%; padding: .85rem 1rem; font-family: var(--sans); font-size: 1rem; font-weight: 300; color: var(--ink);
+    background: var(--cream); border: 1px solid var(--gold-light); border-radius: 4px; outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  select {
+    -webkit-appearance: none; appearance: none; cursor: pointer; padding-right: 2.4rem;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'><path d='M1 1l6 6 6-6' fill='none' stroke='%23b8923f' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat: no-repeat; background-position: right 1rem center;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--gold-dark); box-shadow: 0 0 0 3px rgba(184,146,63,.2); }
+  textarea { resize: vertical; min-height: 100px; }
+  .form-actions { text-align: center; }
+  .error { color: #a33; font-size: .9rem; margin-top: .8rem; min-height: 1.2em; text-align: center; }
+
+  footer { padding: 3rem 1.5rem 3.5rem; text-align: center; background: var(--cream-deep); }
+  footer p { font-family: var(--serif); font-size: 1.3rem; color: var(--gold-dark); line-height: 1.8; }
+  footer small { display: block; margin-top: .6rem; font-size: .85rem; letter-spacing: .25em; color: var(--gold); }
+
+  /* ---------- Scroll reveal ---------- */
+  .reveal { opacity: 0; transform: translateY(30px); transition: opacity 1.1s ease, transform 1.1s ease; }
+  .reveal.visible { opacity: 1; transform: none; }
+
+  @media (min-width: 600px) {
+    section { padding: 6rem 2rem; }
+    .box { width: 98px; }
+    .box span { font-size: 2.8rem; }
+    .box small { font-size: .85rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+    .envelope-overlay { display: none !important; }
+    .reveal, #opening .small, #opening h1, #opening .tag, .scroll-hint { opacity: 1 !important; transform: none !important; }
+  }
+</style>
+<noscript>
+  <style>
+    .envelope-overlay { display: none !important; }
+    html.locked, html.locked body { overflow: auto !important; height: auto !important; }
+    .reveal, #opening .small, #opening h1, #opening .tag, .scroll-hint { opacity: 1 !important; transform: none !important; }
+  </style>
+</noscript>
+</head>
+<body>
+
+<!-- ENVELOPE OVERLAY (no letter: flap opens, seal fades, overlay fades to the opening section) -->
+<div class="envelope-overlay" id="envelopeOverlay" aria-hidden="true">
+  <div class="envelope">
+    <div class="env-back"></div>
+    <div class="env-pocket">
+      <i class="l"></i><i class="r"></i><i class="b"></i><i class="gold-line"></i>
+    </div>
+    <div class="env-flap-wrap">
+      <div class="env-flap">
+        <div class="face front"></div>
+        <div class="face back"></div>
+      </div>
+    </div>
+    <div class="env-seal"></div>
+  </div>
+  <div class="skip-hint">මඟ හැරීමට ස්පර්ශ කරන්න</div>
+</div>
+
+<!-- Reusable Nelum (lotus) corner mandala — drawn from the top-left corner outward -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="floral" viewBox="0 0 200 200">
+      <defs>
+        <path id="nelum-petal" d="M0 0 C 18 -16, 62 -16, 100 0 C 62 16, 18 16, 0 0 Z" vector-effect="non-scaling-stroke"/>
+        <path id="nelum-vein" d="M20 0 L 80 0" vector-effect="non-scaling-stroke"/>
+      </defs>
+      <g fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linejoin="round">
+
+        <!-- Row 1: outer petals -->
+        <g fill-opacity=".08">
+          <use href="#nelum-petal" transform="rotate(0) scale(1.75 1.05)"/>
+          <use href="#nelum-petal" transform="rotate(18) scale(1.75 1.05)"/>
+          <use href="#nelum-petal" transform="rotate(36) scale(1.75 1.05)"/>
+          <use href="#nelum-petal" transform="rotate(54) scale(1.75 1.05)"/>
+          <use href="#nelum-petal" transform="rotate(72) scale(1.75 1.05)"/>
+          <use href="#nelum-petal" transform="rotate(90) scale(1.75 1.05)"/>
+        </g>
+
+        <!-- Row 2 -->
+        <g fill-opacity=".14">
+          <use href="#nelum-petal" transform="rotate(9) scale(1.35 1.1)"/>
+          <use href="#nelum-petal" transform="rotate(27) scale(1.35 1.1)"/>
+          <use href="#nelum-petal" transform="rotate(45) scale(1.35 1.1)"/>
+          <use href="#nelum-petal" transform="rotate(63) scale(1.35 1.1)"/>
+          <use href="#nelum-petal" transform="rotate(81) scale(1.35 1.1)"/>
+        </g>
+        <g fill="none" stroke-opacity=".5" stroke-width=".8">
+          <use href="#nelum-vein" transform="rotate(9) scale(1.35)"/>
+          <use href="#nelum-vein" transform="rotate(27) scale(1.35)"/>
+          <use href="#nelum-vein" transform="rotate(45) scale(1.35)"/>
+          <use href="#nelum-vein" transform="rotate(63) scale(1.35)"/>
+          <use href="#nelum-vein" transform="rotate(81) scale(1.35)"/>
+        </g>
+
+        <!-- Row 3 -->
+        <g fill-opacity=".22">
+          <use href="#nelum-petal" transform="rotate(0)"/>
+          <use href="#nelum-petal" transform="rotate(18)"/>
+          <use href="#nelum-petal" transform="rotate(36)"/>
+          <use href="#nelum-petal" transform="rotate(54)"/>
+          <use href="#nelum-petal" transform="rotate(72)"/>
+          <use href="#nelum-petal" transform="rotate(90)"/>
+        </g>
+        <g fill="none" stroke-opacity=".5" stroke-width=".8">
+          <use href="#nelum-vein" transform="rotate(0)"/>
+          <use href="#nelum-vein" transform="rotate(18)"/>
+          <use href="#nelum-vein" transform="rotate(36)"/>
+          <use href="#nelum-vein" transform="rotate(54)"/>
+          <use href="#nelum-vein" transform="rotate(72)"/>
+          <use href="#nelum-vein" transform="rotate(90)"/>
+        </g>
+
+        <!-- Row 4 -->
+        <g fill-opacity=".32">
+          <use href="#nelum-petal" transform="rotate(9) scale(.66 .9)"/>
+          <use href="#nelum-petal" transform="rotate(27) scale(.66 .9)"/>
+          <use href="#nelum-petal" transform="rotate(45) scale(.66 .9)"/>
+          <use href="#nelum-petal" transform="rotate(63) scale(.66 .9)"/>
+          <use href="#nelum-petal" transform="rotate(81) scale(.66 .9)"/>
+        </g>
+
+        <!-- Row 5: inner petals -->
+        <g fill-opacity=".45">
+          <use href="#nelum-petal" transform="rotate(0) scale(.38 .7)"/>
+          <use href="#nelum-petal" transform="rotate(22.5) scale(.38 .7)"/>
+          <use href="#nelum-petal" transform="rotate(45) scale(.38 .7)"/>
+          <use href="#nelum-petal" transform="rotate(67.5) scale(.38 .7)"/>
+          <use href="#nelum-petal" transform="rotate(90) scale(.38 .7)"/>
+        </g>
+
+        <!-- Seed pod + dotted ring -->
+        <circle r="14" fill-opacity=".55"/>
+        <circle r="22" fill="none" stroke-opacity=".8" stroke-dasharray="1.5 4" stroke-linecap="round"/>
+
+        <!-- Outer beaded arc -->
+        <path d="M192 0 A192 192 0 0 1 0 192" fill="none" stroke-opacity=".6" stroke-dasharray="1.5 5" stroke-linecap="round"/>
+        <g stroke="none" fill-opacity=".9">
+          <circle cx="179.7" cy="28.5" r="2.4"/>
+          <circle cx="162.2" cy="82.6" r="2.4"/>
+          <circle cx="128.7" cy="128.7" r="2.4"/>
+          <circle cx="82.6" cy="162.2" r="2.4"/>
+          <circle cx="28.5" cy="179.7" r="2.4"/>
+        </g>
+      </g>
+    </symbol>
+    <symbol id="diamond" viewBox="0 0 20 20"><path d="M10 0 L13 7 L20 10 L13 13 L10 20 L7 13 L0 10 L7 7 Z"/></symbol>
+  </defs>
+</svg>
+
+<!-- 1. OPENING -->
+<section id="opening">
+  <svg class="floral tl" viewBox="0 0 200 200"><use href="#floral"/></svg>
+  <svg class="floral br" viewBox="0 0 200 200"><use href="#floral"/></svg>
+  <div class="container">
+    <p class="small">ශ්‍රී සුභ මංගලම්</p>
+    <h1>හසාරා <span class="amp">&amp;</span> ප්‍රනීත්</h1>
+    <p class="tag">හදවත් දෙකක්, එක් සුන්දර ආරම්භයක්</p>
+  </div>
+  <div class="scroll-hint">පහළට යන්න</div>
+</section>
+
+<!-- 2. COUNTDOWN -->
+<section id="countdown">
+  <div class="container reveal">
+    <p class="eyebrow">දිනය වෙන්කර තබාගන්න</p>
+    <h2>අපගේ සුන්දර දවසට තවත් ඉතිරිව ඇත්තේ...</h2>
+    <div class="divider"><svg><use href="#diamond"/></svg></div>
+    <div class="timer" id="timer" aria-live="polite">
+      <div class="box"><span id="d">00</span><small>දින</small></div>
+      <div class="box"><span id="h">00</span><small>පැය</small></div>
+      <div class="box"><span id="m">00</span><small>මිනිත්තු</small></div>
+      <div class="box"><span id="s">00</span><small>තත්පර</small></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. COUPLE & PARENTS -->
+<section id="couple">
+  <svg class="floral tl" viewBox="0 0 200 200"><use href="#floral"/></svg>
+  <svg class="floral br" viewBox="0 0 200 200"><use href="#floral"/></svg>
+  <div class="container reveal">
+    <p class="together">දෙමාපියන් ඇතුළු පවුලේ සැමගේ ආශිර්වාදය මැද,</p>
+    <div class="parents">
+      රත්නායක මහතා සහ මහත්මිය
+      <span class="and">සමගින්</span>
+      දිසානායක මහතා සහ මහත්මිය,
+    </div>
+    <div class="divider"><svg><use href="#diamond"/></svg></div>
+    <p class="lead">ඉතා සතුටින් දන්වා සිටින්නේ,</p>
+    <div class="names">
+      හසාරා රත්නායක
+      <span class="amp">සහ</span>
+      ප්‍රනීත් දිසානායක
+    </div>
+    <p class="names-tail">ගේ ආදරණීය විවාහ මංගල්‍යයයි.</p>
+  </div>
+</section>
+
+<!-- 4. WEDDING DETAILS -->
+<section id="details">
+  <div class="container reveal">
+    <p class="eyebrow">මංගල උත්සවය</p>
+    <p class="request">මෙම සුන්දර අවස්ථාවට සහභාගී වන මෙන් ඔබට ආදරයෙන් ආරාධනා කරමු.</p>
+    <div class="date-block">වර්ෂ 2027ක් වූ ජනවාරි මස 20 වන බදාදා දින</div>
+    <p class="time">පොරුවේ චාරිත්‍ර පෙ.ව. 9.45 ට</p>
+  </div>
+</section>
+
+<!-- 5. VENUE -->
+<section id="venue">
+  <svg class="floral tl" viewBox="0 0 200 200"><use href="#floral"/></svg>
+  <svg class="floral br" viewBox="0 0 200 200"><use href="#floral"/></svg>
+  <div class="container reveal">
+    <p class="eyebrow">උත්සවය පැවැත්වෙන ස්ථානය</p>
+    <h2>ආදරයේ සැමරුමට එක්වන තැන</h2>
+    <div class="divider"><svg><use href="#diamond"/></svg></div>
+    <p class="venue-name">Sanaya Mansion</p>
+    <p>නො. 511, ගාලු පාර, මාතර</p>
+    <a class="btn" href="https://www.google.com/maps/search/?api=1&query=Sanaya+Mansion+Matara" target="_blank" rel="noopener noreferrer">ස්ථානය (සිතියම) බලන්න</a>
+  </div>
+</section>
+
+<!-- 6. RSVP -->
+<section id="rsvp">
+  <div class="container reveal">
+    <p class="eyebrow">කරුණාකර අප වෙත දන්වන්න</p>
+    <p>ඔබගේ පැමිණීම අපට මහත් ගෞරවයකි.</p>
+    <form id="rsvpForm" novalidate onsubmit="return false;">
+      <label for="name">ඔබේ නම</label>
+      <input type="text" id="name" name="name" placeholder="ඔබේ සම්පූර්ණ නම" autocomplete="name" required>
+
+      <label for="attending">ඔබ සහභාගි වනවාද?</label>
+      <select id="attending" name="attending">
+        <option value="ඔව් පැමිණෙනවා">ඔව් පැමිණෙනවා</option>
+        <option value="පැමිණීමට නොහැකියි">පැමිණීමට නොහැකියි</option>
+      </select>
+
+      <label for="message">සුභ පැතුම</label>
+      <textarea id="message" name="message" placeholder="ඔබේ සුභ පැතුම් මෙහි ලියන්න..."></textarea>
+
+      <div class="error" id="rsvpError" role="alert"></div>
+      <div class="form-actions">
+        <button type="button" class="btn" id="rsvpBtn" onclick="sendRSVP()">යවන්න</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<!-- 7. DRESS CODE (last section) -->
+<section id="dress">
+  <div class="container reveal">
+    <div class="divider"><svg><use href="#diamond"/></svg></div>
+    <div class="dress-frame">
+      <img src="dress-code.jfif" alt="Dress Code">
+    </div>
+    <p class="dress"><strong>ඇඳුම් පැලඳුම්:</strong> ශ්‍රී ලාංකීය සාම්ප්‍රදායික</p>
+    <div class="divider"><svg><use href="#diamond"/></svg></div>
+  </div>
+</section>
+
+<footer>
+  <p>ආදරයෙන්, හසාරා සහ ප්‍රනීත්</p>
+  <small>2027 · 01 · 20</small>
+</footer>
+
+<script>
+  /* ---------- Envelope overlay: unlock scrolling when finished ---------- */
+  (function () {
+    var overlay = document.getElementById("envelopeOverlay");
+    var root = document.documentElement;
+    var done = false;
+
+    function finish() {
+      if (done) return;
+      done = true;
+      root.classList.remove("locked");
+      if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+      window.scrollTo(0, 0);
+    }
+
+    // Reduced motion users skip the envelope entirely
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      finish();
+      return;
+    }
+
+    // Natural end of the CSS animation sequence (~4.1s)
+    setTimeout(finish, 4300);
+
+    // Tap/click to skip
+    overlay.addEventListener("click", function () {
+      overlay.classList.add("closing");
+      setTimeout(finish, 520);
+    });
+  })();
+
+  /* ---------- Countdown ---------- */
+  // January 20, 2027, 09:45 AM Sri Lanka time (UTC+05:30)
+  var target = new Date("2027-01-20T09:45:00+05:30").getTime();
+  var els = {
+    d: document.getElementById("d"), h: document.getElementById("h"),
+    m: document.getElementById("m"), s: document.getElementById("s")
+  };
+  function pad(n) { return String(n).padStart(2, "0"); }
+  function tick() {
+    var diff = target - Date.now();
+    if (diff <= 0) {
+      document.getElementById("timer").innerHTML =
+        '<p class="countdown-done">අද අපගේ විශේෂ දවසයි! 💛</p>';
+      clearInterval(timerId);
+      return;
+    }
+    var sec = Math.floor(diff / 1000);
+    els.d.textContent = pad(Math.floor(sec / 86400));
+    els.h.textContent = pad(Math.floor((sec % 86400) / 3600));
+    els.m.textContent = pad(Math.floor((sec % 3600) / 60));
+    els.s.textContent = pad(sec % 60);
+  }
+  var timerId = setInterval(tick, 1000);
+  tick();
+
+  /* ---------- Scroll reveal ---------- */
+  var revealEls = document.querySelectorAll(".reveal");
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add("visible"); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.15 });
+    revealEls.forEach(function (el) { io.observe(el); });
+  } else {
+    revealEls.forEach(function (el) { el.classList.add("visible"); });
+  }
+
+  /* ---------- RSVP via WhatsApp ---------- */
+  function sendRSVP() {
+    var name = document.getElementById("name").value.trim();
+    var attending = document.getElementById("attending").value;
+    var message = document.getElementById("message").value.trim();
+    var err = document.getElementById("rsvpError");
+
+    if (!name) {
+      err.textContent = "කරුණාකර ඔබේ නම ඇතුළත් කරන්න.";
+      document.getElementById("name").focus();
+      return;
+    }
+    err.textContent = "";
+
+    var text = "RSVP Update! නම: " + name +
+               ", සහභාගිත්වය: " + attending +
+               ", සුභ පැතුම: " + (message || "පණිවිඩයක් නැත");
+    var url = "https://wa.me/94717865201?text=" + encodeURIComponent(text);
+    window.open(url, "_blank");
+  }
+</script>
+</body>
+</html>
